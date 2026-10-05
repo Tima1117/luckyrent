@@ -68,15 +68,15 @@ function Car({ progress, paint, mouse, mobile, onReady }: { progress: MotionValu
     frames.current += 1;
     if (readyAt.current === null && frames.current >= 2) { readyAt.current = state.clock.elapsedTime; onReady(); }
     const idle = readyAt.current === null || posterMode.current ? 0 : Math.max(0, state.clock.elapsedTime - readyAt.current - 2) * 0.12 * (1 - Math.min(p * 3, 1));
-    const targetRot = 0.85 + p * TAU + idle + mouse.current.x * 0.08;
+    const targetRot = (mobile ? 2.9 : 2.5) + p * TAU + idle + mouse.current.x * 0.08;
     if (!settled.current) { g.rotation.y = targetRot; settled.current = true; }
     g.rotation.y += (targetRot - g.rotation.y) * Math.min(1, dt * 6);
     (window as unknown as { __h3d?: unknown }).__h3d = { p: +p.toFixed(3), rot: +g.rotation.y.toFixed(3), idle: +idle.toFixed(3) };
     g.position.y = Math.sin(state.clock.elapsedTime * 0.8) * 0.015;
     const cam = state.camera as THREE.PerspectiveCamera;
-    const fov = mobile ? 40 : 30;
+    const fov = mobile ? 48 : 30;
     if (cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
-    const z = mobile ? 9.4 - p * 0.8 : 7.5 - p * 0.9;
+    const z = mobile ? 8.6 - p * 0.7 : 7.5 - p * 0.9;
     const y = 1.55 - p * 0.2 + mouse.current.y * -0.12;
     cam.position.x += ((mobile ? 0 : 0.6) + mouse.current.x * 0.35 - cam.position.x) * Math.min(1, dt * 3);
     cam.position.y += (y - cam.position.y) * Math.min(1, dt * 3);
