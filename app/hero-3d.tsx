@@ -1,9 +1,9 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useGLTF, Environment, ContactShadows, MeshReflectorMaterial, Html } from "@react-three/drei";
+import { useGLTF, Environment, Lightformer, ContactShadows, MeshReflectorMaterial } from "@react-three/drei";
 import { motion, useScroll, useMotionValue, useMotionValueEvent, useReducedMotion, useInView, type MotionValue } from "framer-motion";
-import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 
 export type HeroCopy = {
@@ -24,9 +24,13 @@ const PAINTS = ["#d9dee5", "#1f3b63", "#15171b"];
 const MODEL = "/models/ferrari.glb";
 const TAU = Math.PI * 2;
 
-function Car({ progress, paint, mouse, mobile }: { progress: MotionValue<number>; paint: number; mouse: React.MutableRefObject<{ x: number; y: number }>; mobile: boolean }) {
+function Car({ progress, paint, mouse, mobile, onReady }: { progress: MotionValue<number>; paint: number; mouse: React.MutableRefObject<{ x: number; y: number }>; mobile: boolean; onReady: () => void }) {
   const { scene } = useGLTF(MODEL, "/draco/");
   const group = useRef<THREE.Group>(null);
+  const readyAt = useRef<number | null>(null);
+  const settled = useRef(false);
+  const frames = useRef(0);
+  const posterMode = useRef(typeof window !== "undefined" && window.location.hash === "#poster");
   const bodyMat = useRef<THREE.MeshPhysicalMaterial | null>(null);
   const targetColor = useMemo(() => new THREE.Color(PAINTS[paint]), [paint]);
 
@@ -44,7 +48,7 @@ function Car({ progress, paint, mouse, mobile }: { progress: MotionValue<number>
       const mat = m.material as THREE.MeshStandardMaterial;
       const n = (mat.name || "").toLowerCase();
       if (n === "body_color") {
-        const p = new THREE.MeshPhysicalMaterial({ color: PAINTS[0], metalness: 0.75, roughness: 0.28, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 1.4 });
+        const p = new THREE.MeshPhysicalMaterial({ color: PAINTS[0], metalness: 0.6, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.06, envMapIntensity: 1.6 });
         m.material = p; bodyMat.current = p;
       } else if (/glass/.test(n)) {
         m.material = new THREE.MeshPhysicalMaterial({ color: "#9fb4c8", metalness: 0.1, roughness: 0.05, transmission: 0.6, transparent: true, opacity: 0.75, envMapIntensity: 1.2 });
@@ -61,9 +65,13 @@ function Car({ progress, paint, mouse, mobile }: { progress: MotionValue<number>
   useFrame((state, dt) => {
     const g = group.current; if (!g) return;
     const p = progress.get();
-    const idle = state.clock.elapsedTime * 0.12 * (1 - Math.min(p * 3, 1));
+    frames.current += 1;
+    if (readyAt.current === null && frames.current >= 2) { readyAt.current = state.clock.elapsedTime; onReady(); }
+    const idle = readyAt.current === null || posterMode.current ? 0 : Math.max(0, state.clock.elapsedTime - readyAt.current - 2) * 0.12 * (1 - Math.min(p * 3, 1));
     const targetRot = 0.85 + p * TAU + idle + mouse.current.x * 0.08;
+    if (!settled.current) { g.rotation.y = targetRot; settled.current = true; }
     g.rotation.y += (targetRot - g.rotation.y) * Math.min(1, dt * 6);
+    (window as unknown as { __h3d?: unknown }).__h3d = { p: +p.toFixed(3), rot: +g.rotation.y.toFixed(3), idle: +idle.toFixed(3) };
     g.position.y = Math.sin(state.clock.elapsedTime * 0.8) * 0.015;
     const cam = state.camera as THREE.PerspectiveCamera;
     const fov = mobile ? 40 : 30;
@@ -80,19 +88,28 @@ function Car({ progress, paint, mouse, mobile }: { progress: MotionValue<number>
   return <group ref={group}><primitive object={prepared} /></group>;
 }
 
-function Stage({ progress, paint, mouse, mobile }: { progress: MotionValue<number>; paint: number; mouse: React.MutableRefObject<{ x: number; y: number }>; mobile: boolean }) {
+function Stage({ progress, paint, mouse, mobile, onReady }: { progress: MotionValue<number>; paint: number; mouse: React.MutableRefObject<{ x: number; y: number }>; mobile: boolean; onReady: () => void }) {
   const { gl } = useThree();
   useEffect(() => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.05; }, [gl]);
   return (
     <>
       <fog attach="fog" args={["#0b1420", 9, 18]} />
-      <Environment preset="city" environmentIntensity={0.9} />
+      <Environment resolution={mobile ? 128 : 256} frames={1}>
+        <Lightformer intensity={3} rotation-x={Math.PI / 2} position={[0, 5, -6]} scale={[12, 2, 1]} />
+        <Lightformer intensity={3} rotation-x={Math.PI / 2} position={[0, 5, -2]} scale={[12, 2, 1]} />
+        <Lightformer intensity={3} rotation-x={Math.PI / 2} position={[0, 5, 2]} scale={[12, 2, 1]} />
+        <Lightformer intensity={3} rotation-x={Math.PI / 2} position={[0, 5, 6]} scale={[12, 2, 1]} />
+        <Lightformer intensity={1.6} rotation-y={Math.PI / 2} position={[-8, 2.5, 0]} scale={[16, 3, 1]} />
+        <Lightformer intensity={1.6} rotation-y={-Math.PI / 2} position={[8, 2.5, 0]} scale={[16, 3, 1]} />
+        <Lightformer form="ring" color="#5ec8ff" intensity={6} scale={3} position={[6, 4, -8]} onUpdate={self => self.lookAt(0, 0, 0)} />
+        <Lightformer form="ring" color="#dff3ff" intensity={3} scale={2} position={[-7, 3, 6]} onUpdate={self => self.lookAt(0, 0, 0)} />
+      </Environment>
       <spotLight position={[4, 7, 4]} angle={0.55} penumbra={0.6} intensity={120} color="#ffffff" castShadow shadow-mapSize={1024} />
       <spotLight position={[-6, 4, -3]} angle={0.7} penumbra={0.7} intensity={80} color="#5ec8ff" />
       <spotLight position={[0, 5, -7]} angle={0.6} penumbra={0.8} intensity={50} color="#8fb3ff" />
       <ambientLight intensity={0.15} color="#8fb3d9" />
-      <Suspense fallback={<Html center><span className="h3d-loading" /></Html>}>
-        <Car progress={progress} paint={paint} mouse={mouse} mobile={mobile} />
+      <Suspense fallback={null}>
+        <Car progress={progress} paint={paint} mouse={mouse} mobile={mobile} onReady={onReady} />
       </Suspense>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, 0]}>
         <circleGeometry args={[9, 72]} />
@@ -120,6 +137,8 @@ export function Hero3D({ c }: { c: HeroCopy }) {
   const [mobile, setMobile] = useState(false);
   const [paint, setPaint] = useState(0);
   const [manual, setManual] = useState(false);
+  const [ready, setReady] = useState(false);
+  const onReady = useCallback(() => setReady(true), []);
   const mouse = useRef({ x: 0, y: 0 });
   const inView = useInView(ref, { margin: "20% 0px 20% 0px" });
 
@@ -163,11 +182,12 @@ export function Hero3D({ c }: { c: HeroCopy }) {
     <section ref={ref} className="h3d" aria-label="LUCKY RENT">
       <div className="h3d-stage">
         <div className="h3d-glow" aria-hidden />
+        <div className={`h3d-poster${ready ? " is-hidden" : ""}`} aria-hidden />
         {ok === false ? (
           <div className="h3d-fallback" style={{ backgroundImage: "url(/images/ig-forester.webp)" }} />
         ) : (
-          <Canvas className="h3d-canvas" frameloop={inView ? "always" : "never"} dpr={mobile ? 1 : [1, 1.5]} camera={{ fov: 30, position: [0.6, 1.55, 7.5], near: 0.1, far: 60 }} gl={{ antialias: true, powerPreference: "high-performance", alpha: true }} shadows>
-            <Stage progress={progress} paint={paint} mouse={mouse} mobile={mobile} />
+          <Canvas className={`h3d-canvas${ready ? " is-ready" : ""}`} frameloop={inView ? "always" : "never"} dpr={mobile ? 1 : [1, 2]} camera={{ fov: 30, position: [0.6, 1.55, 7.5], near: 0.1, far: 60 }} gl={{ antialias: true, powerPreference: "high-performance", alpha: true }} shadows>
+            <Stage progress={progress} paint={paint} mouse={mouse} mobile={mobile} onReady={onReady} />
           </Canvas>
         )}
 

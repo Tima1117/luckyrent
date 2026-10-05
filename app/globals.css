@@ -75,7 +75,10 @@ h1,h2,h3,p{margin-top:0}
 .h3d{position:relative;height:260vh;background:var(--bg);overflow-x:clip}
 .h3d-stage{position:sticky;top:0;height:100svh;overflow:hidden;background:var(--bg)}
 .h3d-skeleton{height:100svh;background:var(--bg)}
-.h3d-canvas{position:absolute!important;inset:0;z-index:1}
+.h3d-canvas{position:absolute!important;inset:0;z-index:1;opacity:0;transition:opacity .9s ease}
+.h3d-canvas.is-ready{opacity:1}
+.h3d-poster{position:absolute;inset:0;z-index:1;background:url(/images/hero-poster.webp) center/cover no-repeat;transition:opacity 1.1s ease .25s;pointer-events:none}
+.h3d-poster.is-hidden{opacity:0}
 .h3d-glow{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 55% 45% at 50% 62%,rgba(94,200,255,.16),transparent 70%)}
 .h3d-fallback{position:absolute;inset:0;background-size:cover;background-position:center;z-index:1;filter:brightness(.55)}
 .h3d-loading{display:block;width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.2);border-top-color:var(--accent);animation:spin 1s linear infinite}
@@ -216,17 +219,19 @@ h1,h2,h3,p{margin-top:0}
 .contact-row span,.contact-row a{font-size:16px;font-weight:700}
 .contact-row a:hover{color:var(--accent2)}
 .contact-actions{display:flex;gap:10px;flex-wrap:wrap}
-.book{background:#fff;color:#0b1420;border-radius:22px;padding:30px}
+.book{background:linear-gradient(160deg,#152439,#0f1b2b);color:#fff;border:1px solid rgba(94,200,255,.22);border-radius:22px;padding:30px;box-shadow:0 30px 60px -30px rgba(0,0,0,.8);color-scheme:dark}
 .book h3{font-family:var(--fd);font-size:24px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px}
-.book>p{font-size:14px;color:#5c6b7d;margin:0 0 20px}
+.book>p{font-size:14px;color:var(--muted);margin:0 0 20px}
 .book-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
 .field{display:flex;flex-direction:column;gap:6px}
 .field.full{grid-column:1/-1}
-.field label{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#5c6b7d}
-.field input,.field select{width:100%;min-width:0;min-height:46px;border:1px solid #d9e1ea;border-radius:12px;padding:0 14px;font:inherit;font-size:15px;background:#f3f6f9;color:#0b1420}
-.field input:focus,.field select:focus{outline:2px solid var(--accent);border-color:transparent}
+.field label{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2)}
+.field input,.field select{width:100%;min-width:0;min-height:46px;border:1px solid var(--line);border-radius:12px;padding:0 14px;font:inherit;font-size:15px;background:rgba(255,255,255,.05);color:#fff}
+.field select option{background:#0f1b2b;color:#fff}
+.field input::placeholder{color:rgba(255,255,255,.35)}
+.field input:focus,.field select:focus{outline:2px solid var(--accent);border-color:transparent;background:rgba(94,200,255,.08)}
 .book .btn{width:100%;margin-top:6px}
-.book-note{font-size:12px;color:#5c6b7d;margin:12px 0 0;text-align:center}
+.book-note{font-size:12px;color:var(--muted);margin:12px 0 0;text-align:center}
 .map-wrap{height:380px;overflow:hidden;border-top:1px solid rgba(255,255,255,.08)}
 .map-wrap iframe{width:100%;height:100%;border:0;display:block;filter:grayscale(.3) invert(.9) hue-rotate(180deg) brightness(.85) contrast(.95)}
 
@@ -259,6 +264,7 @@ footer{background:#070d15;padding:26px 0;color:rgba(255,255,255,.5);font-size:13
   .mobile-toggle{display:flex}
   .header-cta{display:none}
   .h3d{height:220vh}
+  .h3d-poster{background-image:url(/images/hero-poster-m.webp)}
   .h3d-words{font-size:clamp(44px,16vw,72px);gap:.12em;transform:translateY(-30%)}
   .h3d-top{top:84px}
   .h3d-callout{font-size:15px}

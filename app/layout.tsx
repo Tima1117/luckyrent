@@ -23,6 +23,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preload" href="/models/ferrari.glb" as="fetch" crossOrigin="anonymous" />
+        <link rel="preload" href="/draco/draco_decoder.wasm" as="fetch" crossOrigin="anonymous" />
+        <link rel="preload" href="/images/hero-poster.webp" as="image" media="(min-width: 760px)" />
+        <link rel="preload" href="/images/hero-poster-m.webp" as="image" media="(max-width: 759px)" />
+      </head>
       <body className={`${display.variable} ${body.variable} ${georgian.variable}`}>{children}</body>
     </html>
   );
