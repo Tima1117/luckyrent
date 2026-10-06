@@ -78,7 +78,7 @@ h1,h2,h3,p{margin-top:0}
 .h3d-canvas{position:absolute!important;inset:0;z-index:1;opacity:0;transition:opacity .9s ease}
 .h3d-canvas.is-ready{opacity:1}
 .h3d-canvas canvas{image-rendering:auto}
-.h3d-poster{position:absolute;inset:0;z-index:1;background:url(/images/hero-poster.webp) center/cover no-repeat;transition:opacity 1.1s ease .25s;pointer-events:none}
+.h3d-poster{position:absolute;inset:0;z-index:1;background:url(/images/hero-merc.webp) center/cover no-repeat;transition:opacity 1.1s ease .25s;pointer-events:none}
 .h3d-poster.is-hidden{opacity:0}
 .h3d-glow{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 55% 45% at 50% 62%,rgba(94,200,255,.16),transparent 70%)}
 .h3d-fallback{position:absolute;inset:0;background-size:cover;background-position:center;z-index:1;filter:brightness(.55)}
@@ -265,7 +265,7 @@ footer{background:#070d15;padding:26px 0;color:rgba(255,255,255,.5);font-size:13
   .mobile-toggle{display:flex}
   .header-cta{display:none}
   .h3d{height:220vh}
-  .h3d-poster{background-image:url(/images/hero-poster-m.webp)}
+  .h3d-poster{background-image:url(/images/hero-merc-m.webp)}
   .h3d-words{font-size:clamp(44px,16vw,72px);gap:.12em;transform:translateY(-30%)}
   .h3d-top{top:84px}
   .h3d-callout{font-size:15px}

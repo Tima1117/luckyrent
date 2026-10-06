@@ -7,8 +7,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/models/:path*", headers: longCache },
       { source: "/draco/:path*", headers: longCache },
-      { source: "/images/hero-poster.webp", headers: longCache },
-      { source: "/images/hero-poster-m.webp", headers: longCache },
+      { source: "/images/hero-merc.webp", headers: longCache },
+      { source: "/images/hero-merc-m.webp", headers: longCache },
     ];
   },
 };
