@@ -20,8 +20,8 @@ export type HeroCopy = {
   loading: string;
 };
 
-const PAINTS = ["#d9dee5", "#1f3b63", "#15171b"];
-const MODEL = "/models/ferrari.glb";
+const PAINTS = ["#16181c", "#d9dee5", "#1f3b63"];
+const MODEL = "/models/merc.glb";
 const TAU = Math.PI * 2;
 
 function Car({ progress, paint, mouse, mobile, onReady }: { progress: MotionValue<number>; paint: number; mouse: React.MutableRefObject<{ x: number; y: number }>; mobile: boolean; onReady: () => void }) {
@@ -30,7 +30,8 @@ function Car({ progress, paint, mouse, mobile, onReady }: { progress: MotionValu
   const readyAt = useRef<number | null>(null);
   const settled = useRef(false);
   const frames = useRef(0);
-  const posterMode = useRef(typeof window !== "undefined" && window.location.hash === "#poster");
+  const posterMode = useRef(typeof window !== "undefined" && window.location.hash.startsWith("#poster"));
+  const rotOverride = useRef<number | null>(typeof window !== "undefined" && /rot=([-\d.]+)/.test(window.location.hash) ? parseFloat(RegExp.$1) : null);
   const bodyMat = useRef<THREE.MeshPhysicalMaterial | null>(null);
   const targetColor = useMemo(() => new THREE.Color(PAINTS[paint]), [paint]);
 
@@ -47,15 +48,17 @@ function Car({ progress, paint, mouse, mobile, onReady }: { progress: MotionValu
       if (!m.isMesh) return;
       const mat = m.material as THREE.MeshStandardMaterial;
       const n = (mat.name || "").toLowerCase();
-      if (n === "body_color") {
-        const p = new THREE.MeshPhysicalMaterial({ color: PAINTS[0], metalness: 0.6, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.06, envMapIntensity: 1.6 });
+      if (/c63_base/.test(n)) {
+        const p = new THREE.MeshPhysicalMaterial({ color: PAINTS[0], metalness: 0.55, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 1.5, normalMap: mat.normalMap, normalScale: mat.normalScale });
         m.material = p; bodyMat.current = p;
       } else if (/glass/.test(n)) {
-        m.material = new THREE.MeshPhysicalMaterial({ color: "#9fb4c8", metalness: 0.1, roughness: 0.05, transmission: 0.6, transparent: true, opacity: 0.75, envMapIntensity: 1.2 });
-      } else if (/chrome|metal_gray/.test(n)) {
-        mat.metalness = 1; mat.roughness = 0.18; mat.envMapIntensity = 1.5;
-      } else if (/tires/.test(n)) {
-        mat.roughness = 0.9;
+        m.material = new THREE.MeshPhysicalMaterial({ color: "#1a2230", metalness: 0, roughness: 0.04, transmission: 0.55, transparent: true, opacity: 0.85, envMapIntensity: 1.4, normalMap: mat.normalMap });
+      } else if (/lights/.test(n)) {
+        mat.envMapIntensity = 1.6; mat.roughness = Math.min(mat.roughness, 0.25);
+      } else if (/wheel|hub|disk/.test(n)) {
+        mat.envMapIntensity = 1.4;
+      } else if (/carbon|grid|details_ext|chassis/.test(n)) {
+        mat.envMapIntensity = 1.1;
       }
       m.castShadow = true;
     });
@@ -68,7 +71,7 @@ function Car({ progress, paint, mouse, mobile, onReady }: { progress: MotionValu
     frames.current += 1;
     if (readyAt.current === null && frames.current >= 2) { readyAt.current = state.clock.elapsedTime; onReady(); }
     const idle = readyAt.current === null || posterMode.current ? 0 : Math.max(0, state.clock.elapsedTime - readyAt.current - 2) * 0.12 * (1 - Math.min(p * 3, 1));
-    const targetRot = (mobile ? 2.9 : 2.5) + p * TAU + idle + mouse.current.x * 0.08;
+    const targetRot = (rotOverride.current ?? (mobile ? 0.3 : 0.6)) + p * TAU + idle + mouse.current.x * 0.08;
     if (!settled.current) { g.rotation.y = targetRot; settled.current = true; }
     g.rotation.y += (targetRot - g.rotation.y) * Math.min(1, dt * 6);
     (window as unknown as { __h3d?: unknown }).__h3d = { p: +p.toFixed(3), rot: +g.rotation.y.toFixed(3), idle: +idle.toFixed(3) };
@@ -76,7 +79,7 @@ function Car({ progress, paint, mouse, mobile, onReady }: { progress: MotionValu
     const cam = state.camera as THREE.PerspectiveCamera;
     const fov = mobile ? 48 : 30;
     if (cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
-    const z = mobile ? 8.6 - p * 0.7 : 7.5 - p * 0.9;
+    const z = mobile ? 7.9 - p * 0.7 : 6.8 - p * 0.9;
     const y = 1.55 - p * 0.2 + mouse.current.y * -0.12;
     cam.position.x += ((mobile ? 0 : 0.6) + mouse.current.x * 0.35 - cam.position.x) * Math.min(1, dt * 3);
     cam.position.y += (y - cam.position.y) * Math.min(1, dt * 3);
@@ -186,7 +189,7 @@ export function Hero3D({ c }: { c: HeroCopy }) {
         {ok === false ? (
           <div className="h3d-fallback" style={{ backgroundImage: "url(/images/ig-forester.webp)" }} />
         ) : (
-          <Canvas className={`h3d-canvas${ready ? " is-ready" : ""}`} frameloop={inView ? "always" : "never"} dpr={mobile ? 1 : [1, 2]} camera={{ fov: 30, position: [0.6, 1.55, 7.5], near: 0.1, far: 60 }} gl={{ antialias: true, powerPreference: "high-performance", alpha: true }} shadows>
+          <Canvas className={`h3d-canvas${ready ? " is-ready" : ""}`} frameloop={inView ? "always" : "never"} dpr={[1, 2]} camera={{ fov: 30, position: [0.6, 1.55, 7.5], near: 0.1, far: 60 }} gl={{ antialias: true, powerPreference: "high-performance", alpha: true }} shadows>
             <Stage progress={progress} paint={paint} mouse={mouse} mobile={mobile} onReady={onReady} />
           </Canvas>
         )}
